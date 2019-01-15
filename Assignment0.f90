@@ -6,7 +6,7 @@ program Fibonacci
 implicit none
 
 integer*8 a, b, c, i !make the variables 8-bit integers as lots of digits are needed
-integer, parameter :: n = 50 !counting parameter
+integer, parameter :: n = 48 !counting parameter, 2 off since we start with F0 and F1
 
 !Initialize first two values of Fibonacci
 a = 0
