@@ -1,5 +1,5 @@
-! gaussj.f90  -  starting point for Gauss-Jordan elimination
-! compile with: gfortran -O3 -fdefault-real-8 gaussj.f90
+! Assignment1.f90  -  starting point for Gauss-Jordan elimination
+! compile with: gfortran -O3 -fdefault-real-8 -o GaussJ Assignment1.f90
 
 program test
 implicit none
@@ -13,9 +13,11 @@ A(3,:) = [0.0, 1.0, 0.0]
 
 B = [1.0, 2.0, 3.0]
 
-write (*,*) A
+write (*,*) A(1,:)
+write (*,*) A(2,:)
+write (*,*) A(3,:)
 
-write (*,*) maxloc(A(2:,2:))
+write(*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
  call gaussj(3, A, B)
 
@@ -26,45 +28,49 @@ contains
 ! solve A.x = B using Gauss-Jordan elimination
 ! A gets destroyed, answer is returned in B
 subroutine gaussj(n, A, B)
-	integer n, i, j; real A(n,n), B(n)
-	
-	! pivot indices
-	integer row(n), col(n), pivot(2)
-	
-	forall (i=1:n) row(i) = i
-	forall (j=1:n) col(j) = j
-	
+	integer n, i, j; real A(n,n), B(n), M(n,n+1)
 
+!Make matrix M which is just [A|B]
+	M(:,1:n) = A(:,:)
+	M(:,n+1) = B(:)
 
-	! access data like A(row(i),col(j))
-	
-	! find location of maximal value
-	pivot = maxloc(abs(A))
+	write (*,*) M(1,:)
+	write (*,*) M(2,:)
+	write (*,*) M(3,:)
 
-	! swap rows/columns
-	row([1,pivot(1)]) = row([pivot(1),1])
-	col([1,pivot(2)]) = col([pivot(2),1])
+	write (*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
-	!A([1,pivot(1)],:) = A([pivot(1),1],:)
-	!A(:,[1,pivot(2)]) = A(:,[pivot(2),1])
-	!B([1,pivot(1)]) = B([pivot(1),1])
-
-	!write (*,*) A
-	!write (*,*) B
-
-	! get rid of first column
-	do i = 2,n
-		A(i,:) = A(i,:) - (A(i,1)/A(1,1)) * A(1,:)
-		B(i) = B(i) - (A(i,1)/A(1,1)) * B(1)
+	!Triangularize the A part of the matrix
+	do j = 1,n-1
+		do i = j+1,n
+			M(i,:) = M(i,:) - (M(i,j)/M(j,j)) * M(j,:)
+		end do
 	end do
 
-	write (*,*) A
+	write (*,*) M(1,:)
+	write (*,*) M(2,:)
+	write (*,*) M(3,:)
+	
+	write (*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	
+	!Diagonalize and normalize the A part of the matrix
+	do j = n,2,-1
+		do i = j-1,1,-1
+			M(i,:) = M(i,:) - (M(i,j)/M(j,j)) * M(j,:)
+		end do
+		M(j,:) = M(j,:)/M(j,j)
+	end do
+
+	write (*,*) M(1,:)
+	write (*,*) M(2,:)
+	write (*,*) M(3,:)
+	
+	write (*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	
+	!The last column is now the solution
+	B(:) = M(:,n+1)
+
 	write (*,*) B
-	
-	! if you want to iterate by recursion
-	!call gaussj(n-1, A(2:,2:), B(2:))
-	
-	! otherwise, do loop on k
 end subroutine
 
 end
