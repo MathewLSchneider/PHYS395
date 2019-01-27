@@ -4,27 +4,36 @@
 program test
 implicit none
 
-real A(3,3), B(3), x
+integer  n, i, j
+real F(100), x(100), T(100,100), C(100)
+n = 100
 
-forall (i=1:n) x(i) = -1 + 2/n
-! matrix to invert
-A(1,:) = [1.0, 2.0, 3.0]
-A(2,:) = [3.0, 2.0, 1.0]
-A(3,:) = [0.0, 1.0, 0.0]
+do i = 1,n
+	x(i) = -1.0 + (i-1.0)*2.0/(n-1)
+end do
+forall (i=1:n) F(i) = (1.0/(1.0 + 10.0*x(i)*x(i)))
 
-B = [1.0, 2.0, 3.0]
+do i=1,n
+	do j=1,n
+		T(i,j) = ChebyshevT(x(i),j-1)
+	end do
+end do
 
-write (*,*) A(1,:)
-write (*,*) A(2,:)
-write (*,*) A(3,:)
-
-write(*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-
- call gaussj(3, A, B)
-
-!write (*,*) B
+ call gaussj(n, T, F)
+!do i = 1,n
+!	write (*,*) x(i), C(i,:)
+!end do
+do i=1,n
+	do j = 1,n
+		C(i) = C(i) + F(j)*ChebyshevT(x(i),j)
+	end do
+end do
+do i=1,n
+	write (*,*) x(i), (1.0/(1.0 + 10.0*x(i)*x(i))), C(i)
+end do
 
 contains
+
 
 ! solve A.x = B using Gauss-Jordan elimination
 ! A gets destroyed, answer is returned in B
@@ -35,12 +44,6 @@ subroutine gaussj(n, A, B)
 	M(:,1:n) = A(:,:)
 	M(:,n+1) = B(:)
 
-	write (*,*) M(1,:)
-	write (*,*) M(2,:)
-	write (*,*) M(3,:)
-
-	write (*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-
 	!Triangularize the A part of the matrix
 	do j = 1,n-1
 		do i = j+1,n
@@ -48,12 +51,6 @@ subroutine gaussj(n, A, B)
 		end do
 	end do
 
-	write (*,*) M(1,:)
-	write (*,*) M(2,:)
-	write (*,*) M(3,:)
-	
-	write (*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-	
 	!Diagonalize and normalize the A part of the matrix
 	do j = n,2,-1
 		do i = j-1,1,-1
@@ -62,16 +59,10 @@ subroutine gaussj(n, A, B)
 		M(j,:) = M(j,:)/M(j,j)
 	end do
 
-	write (*,*) M(1,:)
-	write (*,*) M(2,:)
-	write (*,*) M(3,:)
-	
-	write (*,*) "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 	
 	!The last column is now the solution
 	B(:) = M(:,n+1)
 
-	write (*,*) B
 end subroutine
 
 
