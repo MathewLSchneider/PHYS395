@@ -1,26 +1,27 @@
-! Assignment1_first.f90  -  starting point for Gauss-Jordan elimination
-! compile with: gfortran -O3 -fdefault-real-8 -o A1 Assignment1_first.f90
+!100 term zeros grid
 
-program test
+program huntermzero
 implicit none
 
 integer  n, i, j
 real F(100), G(100), x(100), T(100,100), U(100,100), C(100), D(100)
-!real V(10), y(10), H(10,10), A(10)
 
 n = 100
 
-call Initialize(n,x,T,U,F,G)
+call Initialize(n,x,T,U,F,G)!Initialise matrices
 
-call gaussj(n, T, F)
-!call gaussj(n, U, G)
+call gaussj(n, T, F)!solve for coefficients
 
+!sum over to get the approximations including derivative
 do i=1,n
 	do j = 1,n
 		C(i) = C(i) + F(j)*ChebyshevT(x(i),j-1)
 		D(i) = D(i) + F(j)*DerChebyshevT(x(i),j-1)
 	end do
 end do
+
+!Some black magic here, these terms are somehow 
+!messed up in the loop above
 C(79) = 0
 C(71) = 0
 do j = 1,n
@@ -31,7 +32,7 @@ do j = 1,n
 	C(71) = C(71) + F(j)*ChebyshevT(x(71), j-1)
 end do
 
-
+!Write function
 do i=1,n
 	write (*,*) x(i), (1.0/(1.0 + 10.0*x(i)*x(i)))
 end do
@@ -39,6 +40,7 @@ end do
 write (*,*) ""
 write (*,*) ""
 
+!Write approximation
 do i=1,n
 	write (*,*) x(i),  C(i)
 end do
@@ -47,7 +49,7 @@ write (*,*) ""
 write (*,*) ""
 
 forall (i=1:n) F(i) = (-20.0*x(i)/(1.0 + 10.0*x(i)*x(i))**2)
-
+!Write derivative
 do i=1,n
 	write (*,*) x(i), F(i)
 end do 
@@ -55,6 +57,7 @@ end do
 write (*,*) ""
 write (*,*) ""
 
+!Write derivative approx.
 do i=1,n
 	write (*,*) x(i),  D(i)
 end do
@@ -62,35 +65,11 @@ end do
 write (*,*) ""
 write (*,*) ""
 
-!n = 10
-
-!call Initialize(n,y,H,V)
-
-!call gaussj(n, H,V)
-
-!do i=1,n
-!	do j = 1,n
-!		A(i) = A(i) + V(j)*ChebyshevT(y(i),j-1)
-!	end do
-!end do
-
-!do i=1,n
-!	write (*,*) y(i),  A(i)
-!end do
-
-!write (*,*) ""
-!write (*,*) ""
-
-!do i=1,n
-!	write (*,*) y(i), (1.0/(1.0 + 10.0*y(i)*y(i)))
-!end do
-
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 contains
-
+!Initialize all the needed matrices
 subroutine Initialize(n,x,T,U,F,G)
 	integer n, i, j
 	real x(n), T(n,n), F(n), U(n,n), G(n)
@@ -115,6 +94,8 @@ subroutine Initialize(n,x,T,U,F,G)
 	end do
 
 end subroutine
+
+
 ! solve A.x = B using Gauss-Jordan elimination
 ! A gets destroyed, answer is returned in B
 subroutine gaussj(n, A, B)
@@ -154,6 +135,7 @@ elemental function ChebyshevT(x, n)
 	ChebyshevT = cos(n*acos(x))
 end function
 
+!Derivative of Chebyshev polynomial
 elemental function DerChebyshevT(x, n)
 	real DerChebyshevT, x; integer n
 	intent(in) x, n

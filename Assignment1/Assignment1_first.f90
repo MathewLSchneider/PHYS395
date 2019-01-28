@@ -1,21 +1,21 @@
-! Assignment1.f90  -  starting point for Gauss-Jordan elimination
-! compile with: gfortran -O3 -fdefault-real-8 -o A1 Assignment1v2.f90
+!10 term approximations
 
-program test
+program tenterms
 implicit none
 
 integer  n, i, j
 real F(10), G(10), x(10), T(10,10), U(10,10), C(10), D(10)
-!real V(10), y(10), H(10,10), A(10)
 
 
 n = 10
 
+!Initialize matrices
 call Initialize(n,x,T,U,F,G)
 
+!Solver for coefficients
 call gaussj(n, T, F)
-!call gaussj(n, U, G)
 
+!Sum over to get approximations
 do i=1,n
 	do j = 1,n
 		C(i) = C(i) + F(j)*ChebyshevT(x(i),j-1)
@@ -23,6 +23,7 @@ do i=1,n
 	end do
 end do
 
+!Print function
 do i=1,n
 	write (*,*) x(i), (1.0/(1.0 + 10.0*x(i)*x(i)))
 end do
@@ -30,6 +31,7 @@ end do
 write (*,*) ""
 write (*,*) ""
 
+!Print Approx.
 do i=1,n
 	write (*,*) x(i),  C(i)
 end do
@@ -37,34 +39,10 @@ end do
 write (*,*) ""
 write (*,*) ""
 
+!Print deriv. approx.
 do i=1,n
 	write (*,*) x(i),  D(i)
 end do
-
-
-
-!n = 10
-
-!call Initialize(n,y,H,V)
-
-!call gaussj(n, H,V)
-
-!do i=1,n
-!	do j = 1,n
-!		A(i) = A(i) + V(j)*ChebyshevT(y(i),j-1)
-!	end do
-!end do
-
-!do i=1,n
-!	write (*,*) y(i),  A(i)
-!end do
-
-!write (*,*) ""
-!write (*,*) ""
-
-!do i=1,n
-!	write (*,*) y(i), (1.0/(1.0 + 10.0*y(i)*y(i)))
-!end do
 
 
 
@@ -72,6 +50,7 @@ end do
 
 contains
 
+!Initialize all needed matrices
 subroutine Initialize(n,x,T,U,F,G)
 	integer n, i, j
 	real x(n), T(n,n), F(n), U(n,n), G(n)
@@ -96,6 +75,8 @@ subroutine Initialize(n,x,T,U,F,G)
 	end do
 
 end subroutine
+
+
 ! solve A.x = B using Gauss-Jordan elimination
 ! A gets destroyed, answer is returned in B
 subroutine gaussj(n, A, B)
@@ -135,6 +116,7 @@ elemental function ChebyshevT(x, n)
 	ChebyshevT = cos(n*acos(x))
 end function
 
+!Derivative of Chebyshev
 elemental function DerChebyshevT(x, n)
 	real DerChebyshevT, x; integer n
 	intent(in) x, n

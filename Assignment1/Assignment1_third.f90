@@ -1,21 +1,17 @@
-! Assignment1_second.f90  -  starting point for Gauss-Jordan elimination
-! compile with: gfortran -O3 -fdefault-real-8 -o A1 Assignment1_second.f90
+!Fine uniform grid error calc.
 
-program test
+program uniferror
 implicit none
 
 integer  n, i, j
 real F(1000), G(1000), x(1000), T(1000,1000)
 real U(1000,1000), C(1000), D(1000)
-!real V(10), y(10), H(10,10), A(10)
-
 
 n = 1000
 
 call Initialize(n,x,T,U,F,G)
 
 call gaussj(n, T, F)
-!call gaussj(n, U, G)
 
 do i=1,n
 	do j = 1,n
@@ -24,60 +20,18 @@ do i=1,n
 	end do
 end do
 
-!do i=1,n
-!	write (*,*) x(i), (1.0/(1.0 + 10.0*x(i)*x(i)))
-!end do
 
-!forall (i=1:n) F(i) = (1.0/(1.0 + 10.0*x(i)*x(i)))
+forall (i=1:n) F(i) = (1.0/(1.0 + 10.0*x(i)*x(i)))
 
-!write (*,*) ""
-!write (*,*) ""
-
-!do i=1,n
-!	write (*,*) x(i),  C(i)
-!end do
-
-!write (*,*) ""
-!write (*,*) ""
-
-!do i=1,n
-!	write (*,*) x(i),  D(i)
-!end do
-
-!write (*,*) ""
-!write (*,*) ""
-
+!Print the value and location of max error
 write (*,*) "Max error is", maxval(abs(C-F)), &
 			"at x =", x(maxloc(abs(C-F)))
 
+forall (i=1:n) F(i) = (-20.0*x(i)/(1.0 + 10.0*x(i)*x(i))**2)
+
+!Print the value and location of max error for deriv.
 write (*,*) "Max error for derivative is", maxval(abs(D-F)),&
 			 "at x =", x(maxloc(abs(D-F)))
-
-
-
-
-!n = 10
-
-!call Initialize(n,y,H,V)
-
-!call gaussj(n, H,V)
-
-!do i=1,n
-!	do j = 1,n
-!		A(i) = A(i) + V(j)*ChebyshevT(y(i),j-1)
-!	end do
-!end do
-
-!do i=1,n
-!	write (*,*) y(i),  A(i)
-!end do
-
-!write (*,*) ""
-!write (*,*) ""
-
-!do i=1,n
-!	write (*,*) y(i), (1.0/(1.0 + 10.0*y(i)*y(i)))
-!end do
 
 
 
@@ -85,6 +39,7 @@ write (*,*) "Max error for derivative is", maxval(abs(D-F)),&
 
 contains
 
+!Initialize matrices
 subroutine Initialize(n,x,T,U,F,G)
 	integer n, i, j
 	real x(n), T(n,n), F(n), U(n,n), G(n)
@@ -109,6 +64,7 @@ subroutine Initialize(n,x,T,U,F,G)
 	end do
 
 end subroutine
+
 ! solve A.x = B using Gauss-Jordan elimination
 ! A gets destroyed, answer is returned in B
 subroutine gaussj(n, A, B)
@@ -148,6 +104,7 @@ elemental function ChebyshevT(x, n)
 	ChebyshevT = cos(n*acos(x))
 end function
 
+!Deriv. of Cheb.
 elemental function DerChebyshevT(x, n)
 	real DerChebyshevT, x; integer n
 	intent(in) x, n

@@ -1,4 +1,6 @@
 #!/bin/bash
+#to run, first enter chmod u+x runme.sh
+#then enter ./runme.sh
 
 gfortran -O3 -fdefault-real-8 -o A1 Assignment1_first.f90
 ./A1 > DATA1
@@ -20,6 +22,7 @@ echo "Calculating zeros grid error..."
 gfortran -O3 -fdefault-real-8 -o A1 Assignment1_sixth.f90
 ./A1 
 
+chmod u+x plot1.gpl plot2.gpl plot3.gpl plot4.gpl
 ./plot1.gpl
 
 ./plot2.gpl
@@ -27,6 +30,6 @@ gfortran -O3 -fdefault-real-8 -o A1 Assignment1_sixth.f90
 ./plot3.gpl
 
 ./plot4.gpl
-
+echo "Plots have been saved"
 
 echo "All Done"
