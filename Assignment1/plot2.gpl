@@ -12,6 +12,6 @@ set style line 3 lt rgb "black"
 
 
 plot 'DATA2' i 2 u 1:2 w lines ls 3 title 'Actual'
-replot 'DATA' i 2 u 1:2 w lines ls 1 title '10 terms'
+replot 'DATA1' i 2 u 1:2 w lines ls 1 title '10 terms'
 replot 'DATA2' i 3 u 1:2 w lines ls 2 title '100 terms'
 
