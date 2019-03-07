@@ -6,14 +6,14 @@ program A3Q4_5
 implicit none
 
 integer i, n, k
-real x, y, C(5), B(4), dfdc(5), Lambda(5,5), A(5,5), R(5), Chi(2)
+real x, y, C(5), B(4), dfdc(5), Lambda, delta(5,5), A(5,5), R(5), Chi(2)
 real, parameter :: pi = 3.14152653589793238462643383279502884197
 real, dimension(:,:), allocatable :: data, J, Fn
 integer :: length, status, pivot(5), info
 
 !Initialize a bunch of variables
-length = 0; status = 0; B = 0; Lambda = 0; R = 0
-forall (i=1:5) Lambda(i,i) = 1000.0
+length = 0; status = 0; B = 0; Lambda = 10.0; R = 0; delta = 0
+forall (i=1:5) delta(i,i) = 1000.0
 
 !Initial guess for coefficients
 C = 0
@@ -38,7 +38,7 @@ end do
 close(2)
 
 allocate(J(length,5)); allocate(Fn(length,1))
-Chi(1) = 0; Chi(2) = 1000
+Chi(1) = 1000; Chi(2) = 10000000
 
 !Iterate until Chi squared does not change much
 do while (abs(Chi(1) - Chi(2)) > 5.0)
@@ -50,7 +50,10 @@ do while (abs(Chi(1) - Chi(2)) > 5.0)
 			dfdc = df(C, B)
 			J(i,k) = dfdc(k)
 		end do
-	end do
+	end do	
+	A = matmul(transpose(J),J) 
+
+	forall (i=1:5) delta(i,i) = A(i,i)
 
 	!Get function values
 	do i=1,length
@@ -62,13 +65,22 @@ do while (abs(Chi(1) - Chi(2)) > 5.0)
 	Chi(1) = Chi(2)
 	Chi(2) = sum(abs(data(:,2) - Fn(:,1))**2)
 	
-	!Calculate the matrices for the lin equation solve for L-M
-	A = matmul(transpose(J),J) + Lambda
-	R = matmul(transpose(J), data(:,2) - Fn(:,1))
+	!Update scheme for damping term
+	!If error decrease, lower Lambda
+	if (Chi(2) < Chi(1)  ) then; 
+		Lambda = Lambda/5.0; 
 
-	!Solve for new values of coefficients
-	call dgesv(5, 1, A, 5, pivot, R, 5, info)
-	C = C + R
+		A = A + Lambda*delta
+		R = matmul(transpose(J), data(:,2) - Fn(:,1))
+		!Solve for new values of coefficients
+		call dgesv(5, 1, A, 5, pivot, R, 5, info)
+		C = C + R
+
+	end if
+
+	!If error increases, revert changes and increase Lambda
+	if (Chi(2) > Chi(1)) then; Lambda = Lambda*5.0;C = C - R; end if
+	
 
 end do
 
@@ -80,7 +92,7 @@ write (*,*) 'Coefficients are :', C
 write (*,*) 'Where C1-C4 are in the exponent, C5 is the constant'
 
 open (unit=3,file='FIT.txt',action='write', &
-	status='new',position='rewind')
+	status='old',position='rewind')
 do i=1,length
 	write (3,*) data(i,1), Fn(i,1)
 end do
