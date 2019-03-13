@@ -23,7 +23,7 @@ allocate(data(4,nx,ny))
 
 ! timestep resolving fastest timescale in the scan
 dt = 0.01!/sqrt((1.0+g2)*maxval(yy**2) + g2*maxval(xx**2))
-traj = integrate(pi/3.0, -pi/3.0, 10.0, dt)
+traj = integrate(pi/3.0, -pi/3.0, 100.0, dt)
 ! phase space scan
 !$omp parallel do
 do j = 1,ny
@@ -51,21 +51,30 @@ end function
 ! total energy of the dynamical system
 pure function E(u); intent(in) u
         real u(4), E
+        real td1, td2
+
+        td1 = (3.0/g2/g2)*(2.0*u(3) -3.0*cos(u(1) - u(2))*u(4))/(16.0 - 9.0*(cos(u(1) - u(2)))**2)
+        td2 = (3.0/g2/g2)*(8.0*u(4) -3.0*cos(u(1) - u(2))*u(3))/(16.0 - 9.0*(cos(u(1) - u(2)))**2)
         
         associate( x => u(1), y => u(2) )
-        E = (g2*g2/3.0)*(u(4)*u(4) + 4.0*u(3)*u(3) + 3.0*u(3)*u(4)*cos(x - y))+ V(x,y)
+        E = (g2*g2/3.0)*(td2*td2 + 4.0*td1*td1 + 3.0*td1*td2*cos(x - y))+ V(x,y)
         end associate
 end function
 
 ! evaluate derivatives
 subroutine evalf(u, dudt)
         real u(4), dudt(4)
+        real td1, td2
+
+		td1 = (3.0/g2/g2)*(2.0*u(3) -3.0*cos(u(1) - u(2))*u(4))/(16.0 - 9.0*(cos(u(1) - u(2)))**2)
+        td2 = (3.0/g2/g2)*(8.0*u(4) -3.0*cos(u(1) - u(2))*u(3))/(16.0 - 9.0*(cos(u(1) - u(2)))**2)
         
+
         associate( x => u(1), y => u(2), v => u(3), w => u(4) )
-        dudt(1) = (3.0/g2/g2)*(2.0*v -3.0*cos(x - y)*w)/(16.0 - 9.0*(cos(x - y))**2)
-        dudt(2) = (3.0/g2/g2)*(8.0*w -3.0*cos(x - y)*v)/(16.0 - 9.0*(cos(x - y))**2)
-        dudt(3) = - g2*g2*(v*w*sin(x - y) + 3*sin(x))
-        dudt(4) = - g2*g2*(-v*w*sin(x - y) + sin(y))
+        dudt(1) = td1 		!(3.0/g2/g2)*(2.0*v -3.0*cos(x - y)*w)/(16.0 - 9.0*(cos(x - y))**2)
+        dudt(2) = td2		!(3.0/g2/g2)*(8.0*w -3.0*cos(x - y)*v)/(16.0 - 9.0*(cos(x - y))**2)
+        dudt(3) = - g2*g2*(td1*td2*sin(x - y) + 3*sin(x))
+        dudt(4) = - g2*g2*(-td1*td2*sin(x - y) + sin(y))
         end associate
 end subroutine evalf
 
@@ -119,7 +128,13 @@ function integrate(x, y, t, dt)
 	
 	do i = 1,n
 		call gl10(u, dt)
-		write (*,'(6g24.16)') i*dt, g2*sin(u(1)), -g2*cos(u(1)), g2*(sin(u(1)) + sin(u(2))), -g2*(cos(u(1)) + cos(u(2))), E(u)-E0
+		!write (*,'(4g24.16)') i*dt, u, (E(u) - E0)/E0
+		write (*,'(8g24.16)') 0.0, 0.0, g2*sin(u(1)), -g2*cos(u(1)), g2*(sin(u(1)) + sin(u(2))), &
+		                            -g2*(cos(u(1)) + cos(u(2))), i*dt, (E(u)-E0)/E0
+		!write (*,'(g24.16)') g2*sin(u(1)), -g2*cos(u(1))
+		!write (*,'(g24.16)')) , g2*(sin(u(1)) + sin(u(2))), -g2*(cos(u(1)) + cos(u(2)))
+		write (*,*) ''
+		write (*,*) ''
 	end do
 	
 	!call gl10(u,t-n*dt)
