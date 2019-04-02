@@ -5,27 +5,27 @@ program soliton
 implicit none
 
 ! iterations for bisection cycle
-integer, parameter :: iterations = 1000
+integer, parameter :: iterations = 100
 
-real a, b, c, fa, fb, fc
+real a, b, c, fa, fb, fc, En
 integer i
 
 !fa = integrate(0.70710678119832193, 10.0, 0.01); stop "Done"
 
 ! initial interval
-a = 0.5; fa = f(a)
-b = 1.5; fb = f(b)
+a = -0.05; fa = f(a, 0.5)
+b = 1.0; fb = f(b, 0.5)
 
 if (fa*fb > 0.0) stop "The root is not bracketed, bailing out..."
 
 ! bisect the interval
 do i = 1,iterations
-	c = (a+b)/2.0; fc = f(c); if (fc == 0.0) exit
+	c = (a+b)/2.0; fc = f(c, 1.5); if (fc == 0.0) exit
 	
 	! Ridder's variation on the basic method
-	c = c + (c-a)*sign(1.0,fa-fb)*fc/sqrt(fc*fc-fa*fb); fc = f(c)
+	c = c + (c-a)*sign(1.0,fa-fb)*fc/sqrt(fc*fc-fa*fb); fc = f(c, 1.5)
 	
-	write (*,*) c, fc
+	!write (*,*) c, fc
 	
 	if (fa*fc < 0.0) then; b = c; fb = fc; end if
 	if (fc*fb < 0.0) then; a = c; fa = fc; end if
@@ -35,41 +35,42 @@ end do
 contains
 
 ! potential
-pure function V(phi); intent(in) phi
-	real V, phi
+pure function V(x); intent(in) x
+	real V, x
 	
-	V = (phi*phi - 1.0)**2/4.0
+	V = 0.5*x*x 
 end function
 
 ! potential derivative
-pure function DV(phi); intent(in) phi
-	real DV, phi
+pure function DV(psi); intent(in) psi
+	real DV, psi
 	
-	DV = (phi*phi - 1.0)*phi
+	DV = (psi*psi - 1.0)*psi
 end function
 
 ! total energy of the dynamical system
-pure function E(u); intent(in) u
-        real u(2), E
+function E(u, En); 
+        real u(4), E, En
         
-        associate( phi => u(1), pi => u(2) )
-        E = pi**2/2.0 - V(phi)
+        associate( psi => u(1), Dpsi => u(2), x => u(3), Norm => u(4) )
+        E = Dpsi**2/2.0 - V(psi)
         end associate
 end function
 
 ! evaluate derivatives
-subroutine evalf(u, dudt)
-        real u(2), dudt(2)
+subroutine evalf(u, dudt, En)
+        real u(4), dudt(4), En
         
-        associate( phi => u(1), pi => u(2) )
-        dudt(1) = pi; dudt(2) = DV(phi)
+        associate( psi => u(1), Dpsi => u(2), x => u(3), Norm => u(4) )
+        dudt(1) = Dpsi; dudt(2) = V(x)*psi - 2.0*En*psi; 
+        dudt(3) = 1.0 ; dudt(4) = abs(psi*psi)
         end associate
 end subroutine evalf
 
 ! 10th order implicit Gauss-Legendre integrator
-subroutine gl10(y, dt)
-        integer, parameter :: s = 5, n = 2
-        real y(n), g(n,s), dt; integer i, k
+subroutine gl10(y, dt, En)
+        integer, parameter :: s = 5, n = 4
+        real y(n), g(n,s), dt, En; integer i, k
         
         ! Butcher tableau for 8th order Gauss-Legendre method
         real, parameter :: a(s,s) = reshape((/ &
@@ -95,7 +96,7 @@ subroutine gl10(y, dt)
         g = 0.0; do k = 1,16
                 g = matmul(g,a)
                 do i = 1,s
-                        call evalf(y + g(:,i)*dt, g(:,i))
+                        call evalf(y + g(:,i)*dt, g(:,i), En)
                 end do
         end do
         
@@ -104,31 +105,33 @@ subroutine gl10(y, dt)
 end subroutine gl10
 
 ! integrate equations of motion for a given amount of time
-function integrate(pi, t, dt)
-	real pi, t, dt, integrate
-	real u(2), E0; integer i, n
+function integrate(Dpsi, t, dt, En)
+	real Dpsi, t, dt, integrate, En
+	real u(4), E0; integer i, n
 	
 	! start from zero at a given gradient
-	u = [0.0, pi]; E0 = E(u)
+	u = [0.0, Dpsi, 0.0, 1.0]; E0 = En
 	
 	! number of time steps needed
 	n = floor(t/dt)
 	
 	do i = 1,n
-		call gl10(u, dt); if (abs(u(1)) > 100.0) exit
-		write (*,'(4g24.16)') i*dt, u(1), u(2), E(u)-E0
+		call gl10(u, dt, En); if (abs(u(1)/u(4)) > 10.0) exit
+    write (*,'(4g24.16)') -i*dt, -u(1)/u(4), u(2), E0
+		write (*,'(4g24.16)') i*dt, u(1)/u(4), u(2), E0
 	end do
 	
-	call gl10(u,t-n*dt)
+	call gl10(u,t-n*dt, En)
 	
 	! return state at time t
 	integrate = u(1)
 end function
 
 ! function to find a root of...
-function f(x); intent(in) x
-	real f, x
-	f = integrate(x, 10.0, 0.01) - 1.0
+function f(Dpsi, En); 
+	real f, Dpsi, En
+	f = integrate(Dpsi, 20.0, 0.0001, En)
+  write (*,*) ''; write (*,*) ''
 end function
 
 
