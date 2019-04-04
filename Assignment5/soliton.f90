@@ -7,30 +7,36 @@ implicit none
 ! iterations for bisection cycle
 integer, parameter :: iterations = 100
 
+real, parameter :: pi = 3.1415926535897932384626433832795028842Q0
+
 real a, b, c, fa, fb, fc, En
 integer i
 
 !fa = integrate(0.70710678119832193, 10.0, 0.01); stop "Done"
 
 ! initial interval
-a = -0.05; fa = f(a, 0.5)
-b = 1.0; fb = f(b, 0.5)
+!a = 0.01; fa = f(a, 0.5)
+!b = 1000.35; fb = f(b, 0.5)
 
-if (fa*fb > 0.0) stop "The root is not bracketed, bailing out..."
+!write (*,*) a, fa
+!write (*,*) b, fb
+
+!if (fa*fb > 0.0) stop "The root is not bracketed, bailing out..."
 
 ! bisect the interval
-do i = 1,iterations
-	c = (a+b)/2.0; fc = f(c, 1.5); if (fc == 0.0) exit
-	
-	! Ridder's variation on the basic method
-	c = c + (c-a)*sign(1.0,fa-fb)*fc/sqrt(fc*fc-fa*fb); fc = f(c, 1.5)
-	
-	!write (*,*) c, fc
-	
-	if (fa*fc < 0.0) then; b = c; fb = fc; end if
-	if (fc*fb < 0.0) then; a = c; fa = fc; end if
-end do
+!do i = 1,iterations
+!	c = (a+b)/2.0; fc = f(c, 0.5); if (fc == 0.0) exit
+!	
+!	! Ridder's variation on the basic method
+!	c = c + (c-a)*sign(1.0,fa-fb)*fc/sqrt(fc*fc-fa*fb); fc = f(c, 0.5)
+!	
+!	write (*,*) c, fc
+!	
+!	if (fa*fc < 0.0) then; b = c; fb = fc; end if
+!	if (fc*fb < 0.0) then; a = c; fa = fc; end if
+!end do
 
+fa=f(0.5,0.5)
 
 contains
 
@@ -62,8 +68,8 @@ subroutine evalf(u, dudt, En)
         real u(4), dudt(4), En
         
         associate( psi => u(1), Dpsi => u(2), x => u(3), Norm => u(4) )
-        dudt(1) = Dpsi; dudt(2) = V(x)*psi - 2.0*En*psi; 
-        dudt(3) = 1.0 ; dudt(4) = abs(psi*psi)
+        dudt(1) = Dpsi; dudt(2) = 2.0*V(x)*psi - 2.0*En*psi; 
+        dudt(3) = 1.0 ; dudt(4) = (psi*psi)
         end associate
 end subroutine evalf
 
@@ -105,33 +111,34 @@ subroutine gl10(y, dt, En)
 end subroutine gl10
 
 ! integrate equations of motion for a given amount of time
-function integrate(Dpsi, t, dt, En)
-	real Dpsi, t, dt, integrate, En
+function integrate(psi, t, dt, En)
+	real psi, t, dt, integrate, En
 	real u(4), E0; integer i, n
 	
 	! start from zero at a given gradient
-	u = [0.0, Dpsi, 0.0, 1.0]; E0 = En
+	u = [psi, 0.0, 0.0, 1.0]; E0 = En
 	
 	! number of time steps needed
 	n = floor(t/dt)
 	
 	do i = 1,n
-		call gl10(u, dt, En); if (abs(u(1)/u(4)) > 10.0) exit
-    write (*,'(4g24.16)') -i*dt, -u(1)/u(4), u(2), E0
-		write (*,'(4g24.16)') i*dt, u(1)/u(4), u(2), E0
+		call gl10(u, dt, En); if (abs(u(2)) < 0.00001) exit
+    write (*,'(4g24.16)') -i*dt, u(1), u(2), u(4)
+		write (*,'(4g24.16)') i*dt, u(1), u(2), u(4)
+	!write (*,*) u
 	end do
 	
 	call gl10(u,t-n*dt, En)
-	
+	!write (*,*) u
 	! return state at time t
-	integrate = u(1)
+	integrate = u(1)/u(4)
 end function
 
 ! function to find a root of...
-function f(Dpsi, En); 
-	real f, Dpsi, En
-	f = integrate(Dpsi, 20.0, 0.0001, En)
-  write (*,*) ''; write (*,*) ''
+function f(psi, En); 
+	real f, psi, En
+	f = integrate(psi, 50.0, 0.001, En)
+  !write (*,*) ''; write (*,*) ''
 end function
 
 
