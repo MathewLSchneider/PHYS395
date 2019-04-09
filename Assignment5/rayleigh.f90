@@ -29,15 +29,23 @@ call initg(); call initl()
 H = -L/2.0; forall (i=1:n) H(i,i) = -L(i,i)/2.0 + V(x(i))
 
 ! initial guess of the wavefunction
-psi = 1.0/(1.0+x*x); call dump(psi)
+psi = 1.0/(1.0+x*x); !call dump(psi)
 
 ! try to relax using Rayleigh's iteration
-do k = 1,64
-	lambda = dot_product(psi,matmul(H,psi))/dot_product(psi,psi)
-	psi = lsolve(psi,lambda); psi = psi/sqrt(dot_product(psi,psi))
+do k = 1,2
+	!lambda = dot_product(psi,matmul(H,psi))/dot_product(psi,psi)
+	psi = lsolve(H); !psi = psi/sqrt(dot_product(psi,psi))
 	!write (*,*) lambda
-	call dump(psi)
+	!call dump(psi)
 end do
+
+open (unit=1,file='EigVal.txt',action='write', &
+	status='old')
+do i=1,10
+	write (1,*) minval(psi)
+	psi(minloc(psi)) = 100.0
+end do 
+close(1)
 
 contains
 
@@ -102,25 +110,27 @@ end subroutine
 
 ! Rayleigh's iteration solving eigenvalue problem:
 ! [-1/2 d^2/dx^2 + V(x)] psi(x) = lambda psi(x)
-function lsolve(psi, lambda)
-	real lambda, psi(n), lsolve(n), A(n,n), B(n)
-	integer i, pivot(n), status
+function lsolve(H)
+	real lambda, psi(n), lsolve(n), A(n,n), B(n), H(n,n)
+	real WR(n), WI(n), VL(1,n), VR(n,n), Work(4*n,4*n)
+	integer i, status
 	
 	! linear improvement inflating eigenvector
-	A = H; forall (i=1:n) A(i,i) = H(i,i) - lambda
+	A = H; !forall (i=1:n) A(i,i) = H(i,i) - lambda
 	B = psi
 	
+	call dgeev('N','V',n,A,n,WR,WI,VL,1,VR,n,Work,4*n,status)
 	! find linear operator matrix
-        status = 0; select case (kind(A))
-                case(4); call sgesv(n, 1, A, n, pivot, B, n, status)
-                case(8); call dgesv(n, 1, A, n, pivot, B, n, status)
-                case default; call abort
-        end select
+        !status = 0; select case (kind(A))
+          !      case(4); call sgesv(n, 1, A, n, pivot, B, n, status)
+         !       case(8); call dgesv(n, 1, A, n, pivot, B, n, status)
+        !        case default; call abort
+       ! end select
         
         ! bail at first sign of trouble
         if (status /= 0) call abort
         
-        lsolve = B
+        lsolve = WR
 end function
 
 ! dump the solution and its residual

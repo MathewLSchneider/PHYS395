@@ -15,28 +15,28 @@ integer i
 !fa = integrate(0.70710678119832193, 10.0, 0.01); stop "Done"
 
 ! initial interval
-!a = 0.01; fa = f(a, 0.5)
-!b = 1000.35; fb = f(b, 0.5)
+a = 0.0; fa = f(0.75, a)
+b = 0.7; fb = f(0.75, b)
 
-!write (*,*) a, fa
-!write (*,*) b, fb
+write (*,*) a, fa
+write (*,*) b, fb
 
-!if (fa*fb > 0.0) stop "The root is not bracketed, bailing out..."
+if (fa*fb > 0.0) stop "The root is not bracketed, bailing out..."
 
 ! bisect the interval
-!do i = 1,iterations
-!	c = (a+b)/2.0; fc = f(c, 0.5); if (fc == 0.0) exit
-!	
-!	! Ridder's variation on the basic method
-!	c = c + (c-a)*sign(1.0,fa-fb)*fc/sqrt(fc*fc-fa*fb); fc = f(c, 0.5)
-!	
-!	write (*,*) c, fc
-!	
-!	if (fa*fc < 0.0) then; b = c; fb = fc; end if
-!	if (fc*fb < 0.0) then; a = c; fa = fc; end if
-!end do
+do i = 1,iterations
+	c = (a+b)/2.0; fc = f(0.75, c); if (fc == 0.0) exit
+	
+	! Ridder's variation on the basic method
+	c = c + (c-a)*sign(1.0,fa-fb)*fc/sqrt(fc*fc-fa*fb); fc = f(0.75, c)
+	
+	write (*,*) c, fc
+	
+	if (fa*fc < 0.0) then; b = c; fb = fc; end if
+	if (fc*fb < 0.0) then; a = c; fa = fc; end if
+end do
 
-fa=f(0.5,0.5)
+!fa=f(0.5,0.5)
 
 contains
 
@@ -122,22 +122,22 @@ function integrate(psi, t, dt, En)
 	n = floor(t/dt)
 	
 	do i = 1,n
-		call gl10(u, dt, En); if (abs(u(2)) < 0.00001) exit
-    write (*,'(4g24.16)') -i*dt, u(1), u(2), u(4)
-		write (*,'(4g24.16)') i*dt, u(1), u(2), u(4)
+		call gl10(u, dt, En); if (abs(u(1)) > 100.0) exit
+    !write (*,'(4g24.16)') -i*dt, u(1), u(2), u(4)
+	!	write (*,'(4g24.16)') i*dt, u(1), u(2), u(4)
 	!write (*,*) u
 	end do
 	
 	call gl10(u,t-n*dt, En)
 	!write (*,*) u
 	! return state at time t
-	integrate = u(1)/u(4)
+	integrate = u(1)
 end function
 
 ! function to find a root of...
 function f(psi, En); 
 	real f, psi, En
-	f = integrate(psi, 50.0, 0.001, En)
+	f = integrate(psi, 20.0, 0.001, En)
   !write (*,*) ''; write (*,*) ''
 end function
 
