@@ -1,11 +1,11 @@
 ! rayleigh.f90  -  Rayleigh iteration solver for eigenvalue problem
-! compile with: gfortran -O3 -fdefault-real-8 rayleigh.f90 -llapack
+! compile with: gfortran -O3 -fdefault-real-8 rayleigh4.f90 -llapack
 
 program rayleigh
 implicit none
 
 ! order of the spectral scheme
-integer, parameter :: n = 150
+integer, parameter :: n = 300
 
 ! scale of compactification
 real, parameter :: ell = 1.0

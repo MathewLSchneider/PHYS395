@@ -32,7 +32,7 @@ contains
 pure function V(x); intent(in) x
 	real V, x
 	
-	V = 0.25*x*x*x*x 
+	V = 0.5*x*x
 end function
 
 ! potential derivative
@@ -127,7 +127,7 @@ end function
 ! function to find a root of...
 function f(psi, En); 
 	real f, psi, En
-	f = integrate(psi, 4.0, 0.001, En)
+	f = integrate(psi, 6.0, 0.001, En)
   !write (*,*) ''; write (*,*) ''
 end function
 

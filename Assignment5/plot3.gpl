@@ -1,0 +1,22 @@
+#!/usr/bin/env gnuplot
+
+set terminal pdf enhanced
+set output 'Psi QSHO relaxation.pdf'
+
+set xlabel 'x'
+set ylabel 'Psi'
+
+set style line 1 lt rgb "red"
+set style line 2 lt rgb "blue"
+set style line 3 lt rgb "black"
+
+
+plot 'DATAeven' i 0 u 1:2 w l title 'E0'
+replot for [j=0:4] 'DATAodd' i j u 1:2 w l title 'E' .(2*j+1)
+replot for [j=1:4] 'DATAeven' i j u 1:2 w l title 'E' .(2*j)
+
+set output 'Psi^2 relax QSHO.pdf'
+
+plot 'DATAeven' i 0 u 1:4 w l title 'E0'
+replot for [j=0:4] 'DATAodd' i j u 1:4 w l title 'E' .(2*j+1)
+replot for [j=1:4] 'DATAeven' i j u 1:4 w l title 'E' .(2*j)

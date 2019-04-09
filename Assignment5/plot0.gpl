@@ -1,0 +1,17 @@
+#!/usr/bin/env gnuplot
+
+set terminal pdf enhanced
+set output 'Psi Off-Eigenvalue.pdf'
+
+set xlabel 'x'
+set ylabel 'Psi'
+
+set style line 1 lt rgb "red"
+set style line 2 lt rgb "blue"
+set style line 3 lt rgb "black"
+
+
+plot 'DATAeven' i 0 u 2:3 w l title 'E = 0'
+
+plot 'DATAodd' i 0 u 2:3 w l title 'E = 1'
+

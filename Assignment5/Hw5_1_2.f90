@@ -1,70 +1,49 @@
-! soliton.f90  -  solve soliton BVP using shooting method
-! compile with: gfortran -O3 -fdefault-real-8 integrating.f90 
+! Hw5_1.f90 
+! compile with: gfortran -O3 -fdefault-real-8 A5Q1_2.f90 
 
-program soliton
+program Q1
 implicit none
 
-! iterations for bisection cycle
-integer, parameter :: iterations = 100
+real, parameter :: hbar = 1.0, m = 1.0, E = 1.0
+real psi1, psi2, psi3, psi4
 
-real, parameter :: pi = 3.1415926535897932384626433832795028842Q0
-
-real a, b, c, fa, fb, fc, En(10), init
-integer i
-
-open (unit=1,file='EigVal.txt',action='read', &
-	status='old')
-do i = 1,10
-	read (1,*) En(i)
-end do
-close(1)
-!fa=f(0.5,0.5)
-init = 1.0
-do i=1,10,2
-
-	fa = f(init,En(i))
-  init = init*(-1.0)
-end do
+!psi1 = integrate(1.0, 5.0, 1e-3)
+psi2 = integrate(0.0, 5.0, 1e-3)
+!psi3 = integrate(0.0, -1.0, 0.0)
+!psi4 = integrate(0.0, 0.0, -1.0)
 
 contains
 
 ! potential
 pure function V(x); intent(in) x
-	real V, x
-	
-	V = 0.25*x*x*x*x 
+	real V, x, k
+	k = 1.0
+
+	V = 0.5*k*x*x
 end function
 
 ! potential derivative
-pure function DV(psi); intent(in) psi
-	real DV, psi
-	
-	DV = (psi*psi - 1.0)*psi
-end function
+pure function DV(x); intent(in) x
+	real DV, x, k
+	k=1.0
 
-! total energy of the dynamical system
-function E(u, En); 
-        real u(4), E, En
-        
-        associate( psi => u(1), Dpsi => u(2), x => u(3), Norm => u(4) )
-        E = Dpsi**2/2.0 - V(psi)
-        end associate
+	DV = k*x
 end function
 
 ! evaluate derivatives
-subroutine evalf(u, dudt, En)
-        real u(4), dudt(4), En
+subroutine evalf(u, dudx)
+        real u(3), dudx(3)
         
-        associate( psi => u(1), Dpsi => u(2), x => u(3), Norm => u(4) )
-        dudt(1) = Dpsi; dudt(2) = 2.0*V(x)*psi - 2.0*En*psi; 
-        dudt(3) = 1.0 ; dudt(4) = (psi*psi)
+        associate( x => u(1), psi => u(2), Dpsi => u(3))
+        dudx(1) = 1.0; dudx(2) = Dpsi
+        dudx(3) = -(E - V(x))*psi*2.0*m/hbar 
         end associate
 end subroutine evalf
 
 ! 10th order implicit Gauss-Legendre integrator
-subroutine gl10(y, dt, En)
-        integer, parameter :: s = 5, n = 4
-        real y(n), g(n,s), dt, En; integer i, k
+subroutine gl10(y, dt)
+        integer, parameter :: s = 5, n = 3
+        real y(n), g(n,s), dt; integer i, k
         
         ! Butcher tableau for 8th order Gauss-Legendre method
         real, parameter :: a(s,s) = reshape((/ &
@@ -90,7 +69,7 @@ subroutine gl10(y, dt, En)
         g = 0.0; do k = 1,16
                 g = matmul(g,a)
                 do i = 1,s
-                        call evalf(y + g(:,i)*dt, g(:,i), En)
+                        call evalf(y + g(:,i)*dt, g(:,i))
                 end do
         end do
         
@@ -98,38 +77,26 @@ subroutine gl10(y, dt, En)
         y = y + matmul(g,b)*dt
 end subroutine gl10
 
-! integrate equations of motion for a given amount of time
-function integrate(psi, t, dt, En)
-	real psi, t, dt, integrate, En
-	real u(4), E0; integer i, n
+! integrate equations of motion for a given amount of x (written as t)
+function integrate(pi, t, dt)
+	real pi, t, dt, integrate
+	real u(3), E0; integer i, n
 	
 	! start from zero at a given gradient
-	u = [psi, 0.0, 0.0, 0.75]; E0 = En
+	u = [0.0, 0.0, 1.0]; E0 = E
 	
 	! number of time steps needed
 	n = floor(t/dt)
 	
 	do i = 1,n
-		call gl10(u, dt, En); if (abs(u(1)) > 10.00) exit
-    !write (*,'(4g24.16)') -i*dt, u(1), u(2), u(4)
-		write (*,'(4g24.16)') i*dt, u(1), u(2), u(1)*u(1)/u(4)/2.0
-	!write (*,*) u
+		call gl10(u, dt); if (abs(u(2)) > 10.0) exit
+		write (*,'(4g24.16)') i*dt, u(1), u(2), u(3)
 	end do
 	
-	call gl10(u,t-n*dt, En)
-	!write (*,*) u
-	write (*,*) ''
-	write (*,*) ''
+	call gl10(u,t-n*dt)
+	
 	! return state at time t
 	integrate = u(1)
 end function
-
-! function to find a root of...
-function f(psi, En); 
-	real f, psi, En
-	f = integrate(psi, 4.0, 0.001, En)
-  !write (*,*) ''; write (*,*) ''
-end function
-
 
 end program

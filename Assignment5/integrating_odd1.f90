@@ -1,5 +1,5 @@
 ! soliton.f90  -  solve soliton BVP using shooting method
-! compile with: gfortran -O3 -fdefault-real-8 integrating.f90 
+! compile with: gfortran -O3 -fdefault-real-8 integrating_odd.f90 
 
 program soliton
 implicit none
@@ -19,8 +19,8 @@ do i = 1,10
 end do
 close(1)
 !fa=f(0.5,0.5)
-init = 1.0
-do i=1,10,2
+init = 0.75
+do i=2,10,2
 
 	fa = f(init,En(i))
   init = init*(-1.0)
@@ -32,7 +32,7 @@ contains
 pure function V(x); intent(in) x
 	real V, x
 	
-	V = 0.25*x*x*x*x 
+	V = 0.5*x*x
 end function
 
 ! potential derivative
@@ -104,7 +104,7 @@ function integrate(psi, t, dt, En)
 	real u(4), E0; integer i, n
 	
 	! start from zero at a given gradient
-	u = [psi, 0.0, 0.0, 0.75]; E0 = En
+	u = [0.0, psi, 0.0, 0.75]; E0 = En
 	
 	! number of time steps needed
 	n = floor(t/dt)
@@ -127,7 +127,7 @@ end function
 ! function to find a root of...
 function f(psi, En); 
 	real f, psi, En
-	f = integrate(psi, 4.0, 0.001, En)
+	f = integrate(psi, 6.0, 0.001, En)
   !write (*,*) ''; write (*,*) ''
 end function
 
